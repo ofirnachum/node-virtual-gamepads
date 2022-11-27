@@ -468,11 +468,74 @@ $( window ).load(function() {
     initSlotIndicator();
     disableContextMenu();
 
+    var keyToCode = {
+        "d": 0x130, "s": 0x131, "w": 0x133, "a": 0x134,
+        "Enter": 0x13b, " ": 0x13a, "ShiftLeft": 0x136, "ShiftRight": 0x137,
+        "Escape": 0x137,
+    }
+    var activeKeys = {};
+
     var socket = io();
 
     socket.on("gamepadConnected", function(data) {
         slotNumber = data.padId;
         ledBitField = data.ledBitField;
+
+        $(document).on('keydown', function(event) {
+            var key = event.key;
+            if (key === "Shift") {
+                key = event.originalEvent.code;
+            }
+            if (key in activeKeys) {
+                return;  // Avoid multiple event firing.
+            }
+            if (key in keyToCode) {
+                console.info('down', key);
+                socket.emit("padEvent", {type: 0x01, code: keyToCode[key], value: 1});
+            }
+            if (key === "ArrowLeft") {
+                console.info('start', 'left');
+                socket.emit("padEvent", {type: 0x03, code: 0x00, value: 0});
+            } else if (key === "ArrowRight") {
+                console.info('start', 'right');
+                socket.emit("padEvent", {type: 0x03, code: 0x00, value: 255});
+            } else if (key === "ArrowUp") {
+                console.info('start', 'up');
+                socket.emit("padEvent", {type: 0x03, code: 0x01, value: 0});
+            } else if (key === "ArrowDown") {
+                console.info('start', 'down');
+                socket.emit("padEvent", {type: 0x03, code: 0x01, value: 255});
+            }
+
+            if (!(key in activeKeys)) {
+                activeKeys[key] = true;
+            }
+        });
+
+        $(document).on('keyup', function(event) {
+            var key = event.key;
+            if (key === "Shift") {
+                key = event.originalEvent.code;
+            }
+            if (key in keyToCode) {
+                console.info('up', key);
+                socket.emit("padEvent", {type: 0x01, code: keyToCode[key], value: 0});
+            }
+
+            if (key in activeKeys) {
+                delete activeKeys[key];
+            }
+
+            if (!('ArrowLeft' in activeKeys) && !('ArrowRight' in activeKeys)) {
+                socket.emit("padEvent", {type: 0x03, code: 0x00, value: 127});
+                console.info('stop', 'left/right');
+            }
+            if (!('ArrowUp' in activeKeys) && !('ArrowDown' in activeKeys)) {
+                socket.emit("padEvent", {type: 0x03, code: 0x01, value: 127});
+                console.info('stop', 'up/down');
+            }
+        });
+
 
         $(".btn")
             .off("touchstart touchend")

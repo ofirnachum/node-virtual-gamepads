@@ -355,7 +355,7 @@ VirtualJoystick.prototype._buildJoystickStick	= function()
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-//		move using translate3d method with fallback to translate > 'top' and 'left'		
+//		move using translate3d method with fallback to translate > 'top' and 'left'
 //      modified from https://github.com/component/translate and dependents
 //////////////////////////////////////////////////////////////////////////////////
 

@@ -7,6 +7,27 @@ define(["jquery", "./utils", "./settings"], function ($, util, settings) {
         }
     }
 
+    var keyToCode = {
+      "Escape": 1,
+      "`": 41,
+      "1": 2, "2": 3, "3": 4, "4": 5, "5": 6, "7": 8, "9": 10, "0": 11, "-": 12, "=": 13, "Backspace": 14,
+      "Tab": 15, "q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25, "[": 26, "]": 27, "\\": 43,
+      "a": 30, "s": 31, "d": 32, "f": 33, "g": 34, "h": 35, "j": 36, "k": 37, "l": 38, ";": 39, "'": 40, "Enter": 28,
+      "Shift": 42, "z": 44, "x": 45, "c": 46, "v": 47, "b": 48, "n": 49, "m": 50, ",": 51, ".": 52, "/": 53,
+      "Control": 29,
+      " ": 57,  // Space.
+      "ArrowUp": 103, "ArrowDown": 108, "ArrowLeft": 105, "ArrowRight": 106,
+    };
+
+    function getKeyCodeOfKeyPress(event) {
+        var key = event.key
+        if (key in keyToCode) {
+          return keyToCode[key];
+        } else {
+          return -1;
+        }
+    }
+
     var clickedKeys = [];
     var activeModKeys = {};
     function bindClickAndTouchEvents(cb, settingsCb) {
@@ -21,6 +42,27 @@ define(["jquery", "./utils", "./settings"], function ($, util, settings) {
 
         $(document).on("contextmenu",function(){
             return false;
+        });
+
+        $(document).on('keydown', function(event) {
+            console.info("Key down", event.keyCode, event.key);
+            var keyCode = getKeyCodeOfKeyPress(event);
+            if (keyCode >= 0 && $.inArray(keyCode, clickedKeys) === -1) {
+                clickedKeys.push(keyCode);
+                console.info("Pressed", keyCode);
+                if (cb != null) cb({type: 0x01, code: keyCode, value: 1, hardware: false});
+            }
+        });
+
+        $(document).on('keyup', function(event) {
+            console.info("Key up", event.keyCode, event.key);
+            var keyCode = getKeyCodeOfKeyPress(event);
+            var idx = $.inArray(keyCode, clickedKeys);
+            if (keyCode >= 0 && idx >= 0) {
+                clickedKeys.splice(idx, 1);
+                console.info("Released press", keyCode);
+                if (cb != null) cb({type: 0x01, code: keyCode, value: 0, hardware: false});
+            }
         });
 
         // mousedown mouseup click touchstart touchend
